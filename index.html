@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>13 שנים של GTA · בניתי את הסרטון בקוד</title>
+<meta name="description" content="איך בניתי ריל תלת-ממד של 51 שניות על 13 שנים של GTA בלי מצלמה: Claude Code, Blender ו-HyperFrames, עם כל הפרומפטים מוכנים להעתקה.">
+<meta property="og:title" content="13 שנים של GTA · בניתי את הסרטון בקוד">
+<meta property="og:description" content="איך בניתי ריל תלת-ממד של 51 שניות על 13 שנים של GTA בלי מצלמה: Claude Code, Blender ו-HyperFrames, עם כל הפרומפטים מוכנים להעתקה.">
+<meta property="og:image" content="media/poster.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0c0d10; --bg2:#101114; --surface:#141619; --surface2:#1b1d21; --surface3:#24272c;
+  --ink:#f5f5f5; --ink2:#d3d6da; --muted:#b7bbc0; --line:#26282c; --line2:#3b3d40; --paper:#f2eee6; --on-paper:#111418;
+  --v1:#7a16e0; --v2:#a16cff; --cy:#2bd7d6; --amber:#F5C20C; --red:#B81418;
+  --grad:linear-gradient(97deg,#7a16e0,#008786);
+  --grad-text:linear-gradient(97deg,#a16cff,#2bd7d6);
+  --r:16px; --r-lg:24px;
+  --gut:max(18px,env(safe-area-inset-left,0px)); --gutr:max(18px,env(safe-area-inset-right,0px));
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,"Segoe UI",Arial,sans-serif;font-size:18px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:clip}
+img,video{max-width:100%;display:block}
+a{color:inherit}
+::selection{background:rgba(161,108,255,.45)}
+.atmo{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.atmo::before{content:"";position:absolute;width:90vmax;height:90vmax;top:-45vmax;right:-30vmax;background:radial-gradient(closest-side,rgba(122,22,224,.22),transparent 70%)}
+.atmo::after{content:"";position:absolute;width:70vmax;height:70vmax;bottom:-40vmax;left:-25vmax;background:radial-gradient(closest-side,rgba(0,135,134,.16),transparent 70%)}
+.wrap{max-width:1180px;margin-inline:auto;padding-left:var(--gut);padding-right:var(--gutr)}
+.narrow{max-width:820px}
+.grad-text{background:var(--grad-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--grad)}
+
+/* bar */
+.bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px}
+.me{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:700;font-size:15px}
+.me img{width:36px;height:36px;border-radius:50%;box-shadow:0 0 0 2px var(--v2)}
+.me small{display:block;font-weight:500;color:var(--muted);font-size:12px;line-height:1.2}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 26px;border-radius:999px;font:700 17px/1 Rubik,sans-serif;text-decoration:none;border:0;cursor:pointer;transition:transform .15s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn:focus-visible,.copy:focus-visible,.code:focus-visible{outline:3px solid var(--cy);outline-offset:3px}
+.btn-primary{background:var(--paper);color:var(--on-paper);box-shadow:0 14px 40px -12px rgba(242,238,230,.35)}
+.btn-grad{background:var(--grad);color:#fff;box-shadow:0 0 0 1px rgba(161,108,255,.35),0 18px 50px -12px rgba(122,22,224,.6)}
+.btn-ghost{background:transparent;color:var(--ink);box-shadow:0 0 0 1.5px var(--line2) inset}
+.bar .btn{min-height:42px;padding:0 18px;font-size:15px}
+
+/* hero */
+.hero{padding:clamp(34px,6vw,80px) 0 clamp(30px,5vw,60px)}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(28px,5vw,64px);align-items:center}
+h1{font-size:clamp(42px,7vw,86px);line-height:.95;font-weight:900;letter-spacing:-.03em;margin:18px 0 20px;text-wrap:balance}
+.lead{font-size:clamp(19px,2vw,22px);color:var(--ink2);max-width:40ch;margin:0 0 28px}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.phone{position:relative;justify-self:center;width:min(100%,340px);aspect-ratio:9/16;border-radius:34px;padding:10px;background:linear-gradient(160deg,#2a2c31,#0f1013);box-shadow:0 0 0 1px var(--line2),0 40px 90px -30px rgba(122,22,224,.55)}
+.phone video{width:100%;height:100%;object-fit:cover;border-radius:26px;background:#000}
+.phone .sound{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);min-height:40px;padding:0 16px;font-size:14px;background:rgba(12,13,16,.72);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line2) inset;font-size:14px;color:var(--ink2);font-weight:500}
+.badge b{color:var(--ink)}
+
+/* sections */
+.sec{padding:clamp(56px,8vw,104px) 0 0}
+h2{font-size:clamp(32px,4.6vw,54px);line-height:1.02;font-weight:900;letter-spacing:-.025em;margin:14px 0 16px;text-wrap:balance}
+h3{font-size:clamp(22px,2.4vw,28px);line-height:1.15;font-weight:800;margin:0 0 10px}
+p{margin:0 0 16px}
+.muted{color:var(--muted)}
+.tldr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:26px}
+.tldr div{padding:20px;border-radius:var(--r);background:var(--surface);box-shadow:0 0 0 1px var(--line) inset}
+.tldr b{display:block;font-size:30px;font-weight:900;line-height:1;margin-bottom:8px}
+.tldr span{color:var(--muted);font-size:15px;line-height:1.45;display:block}
+
+/* code strip (Kolbo offer) */
+.offer{margin-top:clamp(40px,6vw,64px);border-radius:var(--r-lg);padding:clamp(22px,3vw,34px);position:relative;overflow:hidden;
+  background:linear-gradient(120deg,rgba(122,22,224,.28),rgba(0,135,134,.2)),var(--surface);box-shadow:0 0 0 1px rgba(161,108,255,.35) inset}
+.offer .row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px}
+.offer h3{margin:0 0 4px}
+.codes{display:flex;flex-wrap:wrap;gap:10px}
+.code{display:inline-flex;align-items:center;justify-content:space-between;min-width:280px;gap:12px;text-align:left;min-height:52px;padding:0 8px 0 18px;border-radius:14px;border:0;cursor:pointer;background:var(--bg);color:var(--ink);box-shadow:0 0 0 1.5px var(--line2) inset;font:600 15px Rubik,sans-serif}
+.code b{font-family:"JetBrains Mono",monospace;font-size:17px;letter-spacing:.04em}
+.code i{font-style:normal;font-size:13px;color:var(--muted)}
+.code .pill{background:var(--paper);color:var(--on-paper);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700}
+.fine{font-size:14px;color:var(--muted);margin:14px 0 0}
+
+/* rules */
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:26px}
+.rule{padding:24px;border-radius:var(--r-lg);background:var(--surface);box-shadow:0 0 0 1px var(--line) inset;position:relative;overflow:hidden}
+.rule .n{font-size:64px;font-weight:900;line-height:.9;margin-bottom:12px}
+.rule p{color:var(--ink2);font-size:16px;margin:0}
+
+/* steps */
+.step{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:start;padding:clamp(34px,5vw,56px) 0;border-top:1px solid var(--line)}
+.step:first-of-type{border-top:0}
+.step .num{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--grad);font-weight:900;font-size:19px;margin-bottom:14px}
+.tool{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.04em;background:rgba(43,215,214,.1);color:var(--cy);box-shadow:0 0 0 1px rgba(43,215,214,.35) inset}
+.step ul{margin:0 0 16px;padding-left:20px;color:var(--ink2)}
+.step li{margin:0 0 6px}
+.shots{display:grid;gap:10px}
+.shots.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.shots.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.shots figure{margin:0}
+.shots img{width:100%;border-radius:14px;box-shadow:0 0 0 1px var(--line2)}
+.shots .tall img{aspect-ratio:9/16;object-fit:cover}
+.shots figcaption{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.4}
+
+/* prompt */
+.prompt{position:relative;margin:14px 0 0;border-radius:var(--r);background:#08090b;box-shadow:0 0 0 1px var(--line2) inset;overflow:hidden}
+.prompt-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 10px 10px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+.prompt-h span{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.prompt pre{margin:0;padding:16px;max-height:300px;overflow:auto;white-space:pre-wrap;word-break:break-word;font:13.5px/1.6 "JetBrains Mono",monospace;color:#e6e7ea}
+.prompt.long pre{max-height:420px}
+.copy{min-height:40px;padding:0 16px;border-radius:999px;border:0;cursor:pointer;background:var(--paper);color:var(--on-paper);font:700 14px Rubik,sans-serif}
+.copy.done{background:var(--cy)}
+.note{margin-top:14px;padding:14px 16px;border-radius:14px;background:rgba(245,194,12,.08);box-shadow:0 0 0 1px rgba(245,194,12,.3) inset;font-size:15px;color:var(--ink2)}
+.note b{color:var(--amber)}
+
+/* mistakes */
+.miss{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:26px}
+.miss div{padding:22px;border-radius:var(--r-lg);background:var(--surface);box-shadow:0 0 0 1px var(--line) inset}
+.miss b{display:block;font-size:19px;margin-bottom:6px}
+.miss .x{color:#ff7a7a;font-weight:800}
+.miss .ok{color:var(--cy);font-weight:800}
+.miss p{margin:0 0 10px;font-size:16px;color:var(--ink2)}
+
+/* final */
+.final{margin:clamp(64px,9vw,120px) 0 0;padding:clamp(40px,6vw,72px) 0;background:radial-gradient(80% 90% at 50% 0%,rgba(122,22,224,.32),transparent 70%),var(--bg2);border-top:1px solid var(--line)}
+.final .wrap{text-align:center}
+.final h2{font-size:clamp(36px,5.4vw,66px)}
+.final .lead{margin-inline:auto;max-width:46ch}
+.final .codes{justify-content:center;margin:26px 0 8px}
+.steps3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:900px;margin:28px auto 0;text-align:left}
+.steps3 div{padding:18px;border-radius:var(--r);background:var(--surface);box-shadow:0 0 0 1px var(--line) inset;font-size:16px;color:var(--ink2)}
+.steps3 b{display:block;color:var(--ink);font-size:17px;margin-bottom:4px}
+footer{padding:34px 0 60px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center}
+.toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(120px);background:var(--paper);color:var(--on-paper);padding:12px 20px;border-radius:999px;font-weight:700;font-size:15px;transition:transform .25s;z-index:80}
+.toast.on{transform:translateX(-50%) translateY(0)}
+
+@media (max-width:900px){
+  .hero .wrap{grid-template-columns:minmax(0,1fr)}
+  .phone{width:min(78vw,320px)}
+  .tldr{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rules,.miss,.steps3{grid-template-columns:minmax(0,1fr)}
+  .step{grid-template-columns:minmax(0,1fr)}
+  .bar .hide-s{display:none}
+}
+@media (prefers-reduced-motion:reduce){.btn:hover{transform:none}}
+
+html[dir=rtl] body{direction:rtl}
+.prompt pre{direction:rtl;text-align:right;unicode-bidi:plaintext;white-space:pre-wrap}
+.prompt.code pre{direction:ltr;text-align:left}
+.shots.tall img{aspect-ratio:9/16;object-fit:cover}
+.tool{direction:ltr;unicode-bidi:isolate}
+</style>
+</head>
+<body>
+<div class="atmo"></div>
+<header class="bar"><div class="wrap">
+  <a class="me" href="https://www.instagram.com/leviorel/" target="_blank" rel="noopener"><img src="media/avatar.jpg" alt="אוראל לוי"><span>אוראל לוי<small>@leviorel · יוצר תוכן AI</small></span></a>
+  <a class="btn btn-primary" href="https://app.kolbo.ai?via=orellevi" target="_blank" rel="noopener">לנסות את קולבו<span class="hide-s">&nbsp;· 50% הנחה</span></a>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <div>
+    <span class="eyebrow">מדריך חינמי · 13 שנים של GTA</span>
+    <h1>בניתי את כל הסרטון הזה<br><span class="grad-text">בקוד.</span></h1>
+    <p class="lead">עיר מיניאטורית, מגדל של 230 מיליון קופסאות, PS3 עד PS5 ונגן יוטיוב. אין פה מצלמה ואין תוכנת עריכה: Claude כתב קוד שבונה את העולם ב-Blender, ועוד קוד שמוסיף את המספרים מעל. הנה בדיוק איך, עם כל הפרומפטים מוכנים להעתקה.</p>
+    <div class="cta-row">
+      <a class="btn btn-grad" href="#steps">תראה לי איך</a>
+      <a class="btn btn-ghost" href="https://app.kolbo.ai?via=orellevi" target="_blank" rel="noopener">לקולבו</a>
+    </div>
+    <div class="badges"><span class="badge"><b>51</b> שניות</span><span class="badge"><b>11</b> סצנות תלת-ממד</span><span class="badge"><b>0</b> מצלמות</span></div>
+  </div>
+  <div class="phone">
+    <video id="ep" src="media/reel.mp4" poster="media/poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
+    <button class="btn sound" id="snd" type="button">לחצו לסאונד</button>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <span class="eyebrow">בקצרה</span>
+  <h2>מספרים, עולם, ושכבה <span class="grad-text">אחת של טקסט.</span></h2>
+  <p class="lead" style="max-width:60ch">שלושה כלים עושים את כל העבודה: Claude כותב את הקוד, Blender מרנדר את התלת-ממד, ו-HyperFrames מוסיף מעל את המונים והטקסט. הקול נוצר בקולבו.</p>
+  <div class="tldr"><div><b>01</b><span>תסריט עם עובדות ומקורות</span></div><div><b>02</b><span>עיר תלת-ממד ב-Blender בקוד</span></div><div><b>03</b><span>חפץ אמיתי לכל מספר</span></div><div><b>04</b><span>מונים וטקסט ב-HyperFrames</span></div></div>
+  <div class="offer">
+    <div class="row">
+      <div><h3>מה צריך לפני שמתחילים</h3><p class="muted" style="margin:0">Claude Code (מנוי Claude), Blender (חינם), Node.js בשביל HyperFrames, ffmpeg. ואת הקול יוצרים בקולבו, עם ההנחה שלי:</p></div>
+      <div class="codes">
+        <button class="code" type="button" data-copytext="ORELLEVI50"><span><b>ORELLEVI50</b><br><i>50% הנחה לחודש הראשון</i></span><span class="pill">העתקה</span></button>
+        <button class="code" type="button" data-copytext="ORELLEVI30"><span><b>ORELLEVI30</b><br><i>30% הנחה ל-3 חודשים</i></span><span class="pill">העתקה</span></button>
+      </div>
+    </div>
+    <p class="fine">הקודים עובדים ברכישה הראשונה של מנוי חודשי. נרשמים דרך <a href="https://app.kolbo.ai?via=orellevi" target="_blank" rel="noopener">הקישור שלי</a>, מאשרים עוגיות באתר של קולבו ומזינים את הקוד בתשלום.</p>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <span class="eyebrow">לפני שמתחילים</span>
+  <h2>שלושה חוקים <span class="grad-text">שעשו את ההבדל.</span></h2>
+  <div class="rules"><div class="rule"><div class="n grad-text">1</div><h3>כל מספר הוא חפץ</h3><p>230 מיליון על מסך שחור לא אומר כלום. מגדל של קופסאות שעולה עד השמיים כן. לכל נתון בתסריט יש חפץ אחד שמראה אותו.</p></div><div class="rule"><div class="n grad-text">2</div><h3>רק דברים אמיתיים</h3><p>עטיפת המקור של המשחק, ה-PS5 בצורה האמיתית שלו, התמונה האמיתית של הטריילר, הממשק האמיתי של אינסטגרם. כל דבר גנרי נראה זול ומאבד את הצופה.</p></div><div class="rule"><div class="n grad-text">3</div><h3>המצלמה לא עוצרת</h3><p>בכל שוט משהו זז: המצלמה נכנסת, הקופסה קופצת, השטרות נופלים. ואף טקסט לא נשאר על המסך בלי תנועה יותר משתי שניות.</p></div></div>
+</div></section>
+
+<section class="sec" id="steps"><div class="wrap">
+  <span class="eyebrow">צעד אחרי צעד</span>
+  <h2>כל התהליך, <span class="grad-text">מהתסריט עד הקובץ.</span></h2>
+
+  <div class="step">
+    <div>
+      <span class="num">1</span><span class="tool">CLAUDE · התסריט</span><h3>תסריט שבנוי על עובדות עם מקור</h3>
+      <p>הכל מתחיל מהמספרים. מבקשים מ-Claude לחקור, לבדוק כל נתון מול מקור רשמי, ולכתוב משפט אחד לכל סצנה. ליד כל משפט הוא כותב מה רואים, כי בריל הזה כל מספר הוא חפץ.</p><div class="prompt"><div class="prompt-h"><span>הפרומפט לתסריט</span><button class="copy" type="button" data-copy="p-script">העתקה</button></div><pre id="p-script">אני בונה ריל של 50 שניות בעברית: "13 שנים של GTA במספרים", לקראת היציאה של GTA 6 ב-19.11.2026.
+1. תמצא לי 8-10 נתונים מפתיעים על GTA 5 ועל הטריילרים של GTA 6, ולכל נתון מקור רשמי (Take-Two, Rockstar, Guinness, PEGI). נתון בלי מקור לא נכנס.
+2. תכתוב תסריט קריינות: משפט אחד לכל סצנה, עברית מדוברת, בלי סימני קריאה. ההוק בשנייה הראשונה, וסיום עם "תגיבו קוד".
+3. ליד כל משפט תכתוב מה רואים על המסך: חפץ פיזי אחד שמראה את המספר (מגדל של קופסאות, ערימת זהב, לוח שנה), ולא מספר שעומד לבד.
+4. תסמן מילים בעברית שאפשר לקרוא בשתי דרכים, ותוסיף להן ניקוד.</pre></div>
+    </div>
+    <div class="shots c2 tall"><figure><img src="media/f_8.8.jpg" alt="230 מיליון כמגדל של קופסאות" loading="lazy"><figcaption>230 מיליון עותקים = מגדל של קופסאות</figcaption></figure><figure><img src="media/f_12.6.jpg" alt="מיליארד דולר כזהב וגשם שטרות" loading="lazy"><figcaption>מיליארד בשלושה ימים = זהב ולוח שנה</figcaption></figure></div>
+  </div>
+  <div class="step">
+    <div>
+      <span class="num">2</span><span class="tool">BLENDER · בקוד</span><h3>העולם: עיר מיניאטורית שכולה קוד</h3>
+      <p>Blender הוא תוכנת תלת-ממד חינמית. לא צריך לדעת להשתמש בה: Claude כותב סקריפט Python שבונה את כל העיר, הבניינים, הדקלים, המכוניות והאנשים, ומרנדר אותה מהטרמינל. שוט של 5 שניות מתרנדר אצלי בפחות מ-4 דקות.</p><div class="prompt"><div class="prompt-h"><span>הפרומפט לעיר</span><button class="copy" type="button" data-copy="p-city">העתקה</button></div><pre id="p-city">תכתוב לי סקריפט Python ל-Blender (גרסה 5, מנוע Eevee) שבונה עיר מיניאטורית בסגנון Vice City, כמו דיורמה על שולחן:
+- משטח עם ים, חול, טיילת, כביש עם פסים ומדרכה. מסביב לבסיס פס ניאון ורוד.
+- 7 בנייני ארט-דקו בצבעי פסטל (ורוד, מנטה, לבנדר, אפרסק), עם חלונות מוארים, מדפים מעל כל קומה, כתר מדורג ופסי ניאון. בניין אחד עגול.
+- דקלים עם גזע מעוקל ועלים, שמשיות מפוספסות, מגדל מציל, פנסי רחוב.
+- 5 מכוניות שנוסעות על הכביש ואנשים קטנים שהולכים על הטיילת.
+- שמיים של שקיעה עם עננים בתוך ה-World shader, כדי שהים והכביש הרטוב ישקפו אותם.
+- מצלמה 9:16 (1080x1920) שיורדת ונכנסת פנימה במשך 5 שניות, עם עומק שדה של מיניאטורה וטשטוש תנועה.
+- Bloom בקומפוזיטור ו-AgX.
+שהסקריפט ירוץ מהטרמינל: blender -b -P city.py -- anim shots/city</pre></div>
+    </div>
+    <div class="shots c2 tall"><figure><img src="media/f_2.9.jpg" alt="העיר בשקיעה" loading="lazy"><figcaption>העיר, הים והשקיעה</figcaption></figure><figure><img src="media/f_37.0.jpg" alt="התור לחנות" loading="lazy"><figcaption>אותה עיר מזווית של אנשים בתור</figcaption></figure></div>
+  </div>
+  <div class="step">
+    <div>
+      <span class="num">3</span><span class="tool">BLENDER · בקוד</span><h3>חפץ אחד לכל מספר</h3>
+      <p>מספר לבד על מסך לא מחזיק אף אחד. כל נתון מקבל חפץ שאפשר לראות: מגדל, זהב, קונסולות, נגן יוטיוב. וחשוב: חפצים אמיתיים. עטיפת המקור של המשחק, השדרה של קופסת PS4, תמונת הטריילר האמיתית. משהו גנרי נראה מיד זול.</p><div class="prompt"><div class="prompt-h"><span>הפרומפט לשוטים של החפצים</span><button class="copy" type="button" data-copy="p-props">העתקה</button></div><pre id="p-props">באותו סגנון, תוסיף סקריפט props.py עם שוט נפרד לכל מספר בתסריט, באולפן סגול כהה עם רצפה מבריקה:
+1. מגדל של קופסאות GTA V שנערם מלמטה למעלה. קופסת PS4 כחולה, שדרה מודפסת ועטיפה אמיתית למעלה (אני מצרף את קובץ העטיפה).
+2. ערימת מטילי זהב, שקי כסף עם $, גשם של שטרות ולוח שנה שנתלש: יום 1, 2, 3.
+3. PS3, PS4 ו-PS5 בפרופורציות האמיתיות שלהם. קופסת המשחק קופצת מאחד לשני ומשאירה שובל אור.
+4. נגן יוטיוב עם התמונה של הטריילר (אני מצרף), שמתחלף לטריילר השני.
+5. תינוק בעריסה ליד קופסת GTA V, ואחר כך ילד בכיפה וטלית ליד ספר תורה, עם סוכריות שנזרקות ומדבקת 18 שנוחתת מלפנים.
+לכל שוט: אורך בשניות לפי התזמון של הקריינות, מצלמה שזזה כל הזמן, ופקודה אחת שמרנדרת אותו.</pre></div>
+    </div>
+    <div class="shots c2 tall"><figure><img src="media/f_14.6.jpg" alt="PS3 עם קופסת המשחק" loading="lazy"><figcaption>PS3 אמיתי, הקופסה קופצת לקונסולה הבאה</figcaption></figure><figure><img src="media/f_30.4.jpg" alt="נגן יוטיוב עם הטריילר" loading="lazy"><figcaption>נגן יוטיוב עם תמונת הטריילר</figcaption></figure></div>
+  </div>
+  <div class="step">
+    <div>
+      <span class="num">4</span><span class="tool">KOLBO · הקול</span><h3>הקריינות, ומילים שצריך לנקד</h3>
+      <p>הקריינות רגועה ושטוחה, כמו מישהו שמספר. הקול נוצר ב-AI, ואת זה עושים ב<a href="https://app.kolbo.ai?via=orellevi" target="_blank" rel="noopener">קולבו</a>. בעברית יש מילים שאפשר לקרוא בשתי דרכים, וה-AI בוחר לבד. אצלי "לחדש" יצא "לחַדֵּש" במקום "לחָדָש". הפתרון: לכתוב את המילה בניקוד בטקסט שנותנים לקול. אחר כך מעבירים את הקובץ ב-Whisper כדי לקבל זמן מדויק לכל מילה.</p><div class="note"><b>טיפ:</b> בלי סימני קריאה בטקסט. כל "!" הופך את הקריינות לפרסומת.</div>
+    </div>
+    <div class="shots c2 tall"><figure><img src="media/f_41.0.jpg" alt="תינוק בעריסה עם GTA V" loading="lazy"><figcaption>"ילד שנולד כשהמשחק הקודם יצא"</figcaption></figure><figure><img src="media/f_43.2.jpg" alt="בר מצווה" loading="lazy"><figcaption>"כבר הגיע לבר מצווה"</figcaption></figure></div>
+  </div>
+  <div class="step">
+    <div>
+      <span class="num">5</span><span class="tool">HYPERFRAMES · המושן</span><h3>מונים מכניים וטקסט על הווידאו</h3>
+      <p>HyperFrames בונה וידאו מ-HTML. Claude כותב בו את כל מה שעל המסך: המונים המתגלגלים, הכותרות, שורות המקור והסוף עם התגובה באינסטגרם. כל טקסט נכנס בדיוק על המילה שנאמרת.</p><div class="prompt"><div class="prompt-h"><span>הפרומפט לשכבת הטקסט</span><button class="copy" type="button" data-copy="p-overlay">העתקה</button></div><pre id="p-overlay">תבנה לי ב-HyperFrames שכבת טקסט מעל הווידאו (plate.mp4) ומעל הקריינות (vo.mp3):
+- מונה מכני: תופים של 0-9 שמתגלגלים, עם טשטוש תנועה אנכי לפי המהירות, ונשיאה אמיתית בין הספרות (כשהיחידות עוברות מ-9 ל-0, העשרות זזות). נחיתה עם קפיצה קטנה, הבזק וקליק.
+- כותרות בעברית בגופן Rubik: מספר לבן גדול, מילה אחת בגרדיאנט ורוד-כתום.
+- מתחת לכל נתון כמוסה כהה עם המקור (Take-Two, Guinness, Rockstar).
+- הכל בתוך האזור הבטוח של אינסטגרם: בלי טקסט ב-250 הפיקסלים העליונים, ב-420 התחתונים, ו-150 מכל צד.
+- כל טקסט נכנס בדיוק על המילה שנאמרת. הנה התזמון של כל מילה: [הדבקת הפלט של Whisper]
+- בסוף: ממשק תגובות של אינסטגרם במצב כהה. מקלידים "קוד", לוחצים Post, התגובה נכנסת והלב מתמלא באדום.</pre></div>
+    </div>
+    <div class="shots c2 tall"><figure><img src="media/f_0.0.jpg" alt="מונה מכני 2013" loading="lazy"><figcaption>המונה המכני בפריים הראשון</figcaption></figure><figure><img src="media/f_50.9.jpg" alt="ממשק תגובות של אינסטגרם" loading="lazy"><figcaption>הסוף: "קוד" בממשק של אינסטגרם</figcaption></figure></div>
+  </div>
+  <div class="step">
+    <div>
+      <span class="num">6</span><span class="tool">FFMPEG · חיבור</span><h3>צבע, חיבור וסאונד</h3>
+      <p>שלוש פקודות סוגרות את הכל: צבע וגרעין לכל שוט, חיבור לקובץ אחד, רינדור השכבה ואיזון עוצמה לתקן של אינסטגרם (‎-14 LUFS). את הפקודות האלה Claude מריץ לבד, אתם רק מאשרים.</p><div class="prompt code"><div class="prompt-h"><span>הפקודות</span><button class="copy" type="button" data-copy="p-post">העתקה</button></div><pre id="p-post"># צבע, חדות וגרעין לכל שוט, ואז חיבור הכל לקובץ אחד
+ffmpeg -framerate 30 -i shots/city/f_%04d.png -vf "curves=r='0/0 0.25/0.22 0.75/0.80 1/1',eq=saturation=1.14:contrast=1.03,vignette=angle=PI/7,unsharp=5:5:0.55,noise=alls=4:allf=t,format=yuv420p" -c:v libx264 -crf 14 seg00.mp4
+ffmpeg -f concat -safe 0 -i list.txt -c copy plate.mp4
+
+# רינדור השכבה של HyperFrames מעל ה-plate והקריינות
+npx hyperframes render . -o raw.mp4 -f 30 -q high
+
+# עוצמת סאונד לתקן של אינסטגרם
+ffmpeg -i raw.mp4 -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:v copy final.mp4</pre></div>
+    </div>
+    <div class="shots c2 tall"><figure><img src="media/f_25.8.jpg" alt="מסך הטריילר מעל העיר" loading="lazy"><figcaption>שוט אחרי צבע</figcaption></figure><figure><img src="media/f_27.9.jpg" alt="שלטי שיא העולם" loading="lazy"><figcaption>שלושה שיאי עולם</figcaption></figure></div>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <span class="eyebrow">ממה שנשבר לי</span>
+  <h2>מה נשבר, <span class="grad-text">ומה תיקן.</span></h2>
+  <div class="miss"><div><b>גרסה ראשונה שטוחה</b><p><span class="x">מה נשבר:</span> עשיתי קודם גרפיקה דו-ממדית עם מספרים על רקע ניאון. זה נראה כמו מצגת.</p><p><span class="ok">מה תיקן:</span> עולם תלת-ממד אמיתי ב-Blender, וחפץ לכל מספר.</p></div><div><b>קופסאות שלא נראו כמו המשחק</b><p><span class="x">מה נשבר:</span> קופסה שחורה עם V ירוק שציירתי לבד. אף אחד לא זיהה שזה GTA.</p><p><span class="ok">מה תיקן:</span> עטיפת המקור, קופסת PS4 כחולה ושדרה מודפסת. עכשיו מזהים בשנייה.</p></div><div><b>מילה שנקראה לא נכון</b><p><span class="x">מה נשבר:</span> ה-AI הקריא "לחדש" כמו "לחַדֵּש".</p><p><span class="ok">מה תיקן:</span> ניקוד על המילה בטקסט של הקול, ובדיקה של המילה לפני שמחברים.</p></div></div>
+</div></section>
+
+<section class="final" id="start"><div class="wrap">
+  <span class="eyebrow">עכשיו תורכם</span>
+  <h2>תבנו את <span class="grad-text">שלכם.</span></h2>
+  <p class="lead">GTA 6 יוצא ב-19 בנובמבר. את הקול לסרטון שלכם יוצרים בקולבו: נרשמים דרך הקישור שלי ולוקחים את ההנחה לחודש הראשון.</p>
+  <a class="btn btn-grad" href="https://app.kolbo.ai?via=orellevi" target="_blank" rel="noopener">להתחיל בקולבו</a>
+  <div class="codes">
+    <button class="code" type="button" data-copytext="ORELLEVI50"><span><b>ORELLEVI50</b><br><i>50% הנחה לחודש הראשון</i></span><span class="pill">העתקה</span></button>
+    <button class="code" type="button" data-copytext="ORELLEVI30"><span><b>ORELLEVI30</b><br><i>30% הנחה ל-3 חודשים</i></span><span class="pill">העתקה</span></button>
+  </div>
+  <div class="steps3">
+    <div><b>1. נרשמים</b>דרך <a href="https://app.kolbo.ai?via=orellevi" target="_blank" rel="noopener">הקישור שלי</a> ומאשרים עוגיות באתר.</div>
+    <div><b>2. בוחרים מנוי חודשי</b>הקודים עובדים ברכישה הראשונה.</div>
+    <div><b>3. מזינים את הקוד</b>בתשלום. ואז חוזרים לפה ומתחילים מצעד 1.</div>
+  </div>
+  <p class="fine" style="margin-top:28px">עשיתם אחד? תתייגו את <b>@leviorel</b> ואת <b>@kolbo.ai</b>, אני רוצה לראות.</p>
+</div></section>
+
+<footer><div class="wrap"><span>אוראל לוי · <a href="https://www.instagram.com/leviorel/" target="_blank" rel="noopener">@leviorel</a></span><span>13 שנים של GTA · יצירת מעריצים, לא בשיתוף Rockstar Games</span></div></footer>
+<div class="toast" id="toast">הועתק</div>
+<script>
+const toast=document.getElementById('toast');let tt;
+function flash(msg){toast.textContent=msg;toast.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toast.classList.remove('on'),1600)}
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}a.remove();return ok}}
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const ok=await copyText(document.getElementById(b.dataset.copy).textContent);b.textContent=ok?'הועתק':'סמנו והעתיקו';b.classList.toggle('done',ok);flash(ok?'הפרומפט הועתק':'סמנו את הטקסט');setTimeout(()=>{b.textContent='העתקה';b.classList.remove('done')},1800)}));
+document.querySelectorAll('[data-copytext]').forEach(b=>b.addEventListener('click',async()=>{const ok=await copyText(b.dataset.copytext);flash(ok?b.dataset.copytext+' הועתק':'הקוד: '+b.dataset.copytext)}));
+const v=document.getElementById('ep'),s=document.getElementById('snd');
+s.addEventListener('click',()=>{v.muted=!v.muted;if(!v.muted){v.currentTime=0;v.play()}s.textContent=v.muted?'לחצו לסאונד':'הסאונד פועל'});
+</script>
+</body>
+</html>
